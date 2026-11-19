@@ -1,0 +1,52 @@
+# (zzzf) Ecran de remerciements du portage (research/thanks-screen.md), graphismes 16 bits : meme decor que les credits de la fin (tableau de
+# Castlevania-MD assombri, plan B), pages sans interaction jusqu'a la fin automatique, puis retour au titre (second passage : dracula_cycles = 1).
+# Image count borne : 5 pages = 4 x 330 + 240 = 1560 images.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+include zzzf_thanks_route.inc
+expect ram8('vk_gfx16') == 1
+poke Enemies_god 1
+poke dracula_cycles 1
+poke dracula+544 1
+until ram8('dracula+544') == 2 max 100
+wait 40
+shot zzzf-16b-0-credits
+poke dracula+482 1
+poke dracula+544 4
+until front_mode == MODES['THANKS'] max 200
+set t0 frame
+wait 40
+shot zzzf-16b-1-page1
+expect ram8('vk_gfx16') == 1
+expect (238, 238, 238) in colors(0, 80, 256, 130) # texte blanc sur le tableau
+set bgc len({c for c in colors(0, 150, 256, 220)})
+expect bgc >= 3 # le tableau de la fin est derriere (plan B)
+until frame - t0 >= 330 + 40 max 400
+set a1 sorted({c for c in colors(80, 96, 176, 104)})
+shot zzzf-16b-2-page2-a
+wait 7
+set a2 sorted({c for c in colors(80, 96, 176, 104)})
+shot zzzf-16b-2-page2-b
+wait 7
+shot zzzf-16b-2-page2-c
+wait 7
+shot zzzf-16b-2-page2-d
+expect a1 != a2 # le degrade s'anime
+set w1 colors(0, 100, 256, 101)
+wait 5
+set w2 colors(0, 100, 256, 101)
+expect w1 != w2 # la vague
+until frame - t0 >= 660 + 40 max 400
+shot zzzf-16b-3-page3
+until frame - t0 >= 990 + 40 max 400
+shot zzzf-16b-4-page4
+until frame - t0 >= 1320 + 40 max 400
+shot zzzf-16b-5-the-end
+expect front_mode == MODES['THANKS']
+until front_mode != MODES['THANKS'] max 400
+expect frame - t0 < 1620 # fin automatique, nombre d'images borne
+expect front_mode == MODES['TITLE'] # second passage : retour au titre
+wait 20
+shot zzzf-16b-6-titre
+expect (238, 238, 238) in colors(0, 0, 256, 224)

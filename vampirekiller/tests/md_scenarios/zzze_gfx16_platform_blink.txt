@@ -1,0 +1,34 @@
+# (zzze) Mode 16 bits, plateforme mobile (stages 5 et 10, build_platform16.py) : elle ne doit pas clignoter avec Simon. Elle etait
+# dessinee en PAL3 (palette de Simon 16 bits, entrees 1 a 13 reecrites en silhouette pendant 790C) : silhouette orange. Elle
+# est maintenant en PAL1 (palette des objets, jamais reecrite en salle). Stage 10 salle 0 : Simon prend l objet 09 (C434,
+# invincibilite : silhouette 2 images sur 4), les couleurs de la plateforme restent les memes a chaque image.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+include zzm_enter10.inc
+poke Enemies_god 1
+poke vk_debug_keys 1
+expect ram8('vk_gfx16_on') == 1
+expect game.stage == 10 and game.room == 0
+wait 20
+set pl lambda: ram8('vk_platforms+2')
+set pr lambda: ram8('vk_platforms+1')
+shot zzze-plat-10-0-avant
+set pcol lambda: sorted({c for c in colors(pl(), pr(), pl() + 32, pr() + 16)})
+set before pcol()
+echo before
+poke enemy_state+143 0xFF
+wait 4
+expect 0x90 <= ram8('enemy_state+143') <= 0xFF
+set red lambda: len([c for c in colors(game.player.x - 8, game.player.y - 31, game.player.x + 16, game.player.y + 1) if c == (238, 0, 32)]) > 40
+set s0 (red(), pcol())
+wait 1
+set s1 (red(), pcol())
+wait 1
+set s2 (red(), pcol())
+wait 1
+set s3 (red(), pcol())
+shot zzze-plat-10-0-clignote
+expect len({a[0] for a in (s0, s1, s2, s3)}) == 2
+expect all((238, 0, 32) not in a[1] for a in (s0, s1, s2, s3)) # jamais la silhouette de Simon
+expect all(c in a[1] for a in (s1, s2, s3) for c in s0[1]) # couleurs de la plateforme gardees a chaque image (la fenetre peut en gagner : fond qui defile)

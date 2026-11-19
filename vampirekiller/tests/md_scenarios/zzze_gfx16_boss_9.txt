@@ -1,0 +1,192 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Boss des stages 6 et 9 en 16 bits") : le deroulement de zzd_stage9_boss en 16 bits.
+# (zzd) Boss du stage 9 : deux objets 14h (salle 7), boules D700 type 7, coups, contacts, mort, orbe, passage au stage 10.
+# vk_boss : +3 vivant, +21 C418, +28 orbe, +33 Y orbe, +34 CE14, +35 CE11, +36 boule 0 (+38 Y, +40 X, +42 vy, +44 vx), +56 type (2),
+# +64 objet 0 (+66 etat, +69 +10, +76 Y, +78 X, +82 vx), +84 objet 1. Valeurs des traces openMSX R, B et C2 (research/stage9-boss.md).
+until front_mode == MODES['TITLE'] max 2000
+wait 10
+poke vk_gfx16 1
+tap C
+wait 40
+tap START
+wait 10
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+wait 4
+tap A
+expect ram8('Enemies_god') == 0
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap B
+until game.stage == 9 and game.room == 0 max 200
+poke Enemies_god 1
+wait 20
+include zzb_next.inc
+until game.stage == 9 and game.room == 1 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 2 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 3 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 4 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 5 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 6 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 7 max 200
+include zzb_next.inc
+until game.stage == 9 and game.room == 8 max 200
+# Salle 8 : cle blanche (208, 96), porte (12, 128) a gauche -> salle 7 du boss, Simon en (246, y de la porte).
+until game.player.mode == 0 max 100
+poke vk_game+0 216
+poke vk_game+1 98
+poke vk_game+2 0
+until ram8('items') & 1 == 1 max 12
+poke vk_game+0 40
+poke vk_game+1 176
+poke vk_game+2 1
+until ram8('items+2') == 1 max 200 LEFT
+until game.room == 7 max 600 LEFT
+wait 4
+expect game.player.x == 246
+poke Enemies_god 0
+until game.player.mode == 0 max 100
+poke vk_game+0 16
+poke vk_game+1 128
+poke vk_game+2 1
+# Creation : deux objets 14h en (30h, C5h) et (D0h, C5h), +10 = 1Fh a la passe de creation, 1Eh deux images apres (trace R 4508).
+until ram8('vk_boss+3') == 1 max 200
+expect ram8('vk_boss+56') == 2
+expect ram16('vk_boss+78') == 0x3000 and ram16('vk_boss+98') == 0xD000 and ram16('vk_boss+76') == 0xC500 and ram16('vk_boss+96') == 0xC500
+expect ram8('vk_boss+69') == 0x1F and ram8('vk_boss+89') == 0x1F and ram8('vk_boss+66') == 0 and ram8('vk_boss+68') == 0x36
+wait 2
+expect ram8('vk_boss+69') == 0x1E
+shot zzd-creation
+expect ram8('vk_gfx16_on') == 1
+# Momies 16 bits (b3_mummy0..2, PAL2 = vk_boss9_16_palette) : bandelettes claires et sombres, en sprites PAL2.
+set pal lambda: [(ram16('vdpSpriteCache+%d' % (8 * i + 4)) >> 13) & 3 for i in range(80)]
+expect 2 in pal()
+set mm sorted(colors(20, 130, 256, 200))
+expect (172, 170, 98) in mm and (65, 68, 98) in mm
+# Clignotement (etat 3, +11 pair) : les cellules claires de la pose, en ROM (vk_boss9_16_flash), sont orange ; puis l'etat est rendu tel quel.
+set s0 [ram8('vk_boss+66'), ram8('vk_boss+69'), ram8('vk_boss+71')]
+poke vk_boss+66 3
+poke vk_boss+71 0
+wait 3
+shot zzze-clignote
+set fl9 sorted(colors(20, 130, 256, 200))
+expect (172, 101, 32) in fl9 or (205, 137, 65) in fl9 # bandelettes orange
+write vk_boss+66 8 s0[0]
+write vk_boss+71 8 s0[2]
+wait 3
+# Etat 0 pendant 20h passes, puis l'etat 1 choisit le sens (Simon a gauche : vx FDD0) et l'etat 2 marche (trace R 4570 : X 2B.90, pose 36 puis 34).
+until ram8('vk_boss+66') == 2 max 100
+expect ram16('vk_boss+82') == 0xFDD0 and ram8('vk_boss+71') == 1
+wait 2
+expect ram8('vk_boss+68') == 0x34 and ram8('vk_boss+72') == 0
+# Garde A4E8 (research/audio-driver.md, section 7) : pendant la pose de mort de Simon (C420 = 6 ; ici health.fell = 1,
+# octet +4 de `health`) l'enveloppe de la banque 3 ne demande rien : la boule part sans effet 0A. Puis le garde est leve.
+poke health+4 1
+poke vk_psg+22 0
+wait 2
+# Boule : objet 0 pose en (9Ah, C5h) a l'etat 3, +11 = 1, Simon en (16, 128) : vy -48 (FFB8), vx FE02, depart (9Ah, ADh) (trace R 4877).
+poke vk_boss+78 39424 16
+poke vk_boss+66 3
+poke vk_boss+67 0
+poke vk_boss+70 1
+poke vk_boss+71 1
+poke vk_boss+36 0
+poke vk_boss+46 0
+until ram8('vk_boss+36') == 1 max 10
+expect ram8('vk_psg+22') == 0 # C420 = 6 : A4E8 ne demande pas l'effet 0A
+poke health+4 0
+poke vk_boss+78 39424 16
+poke vk_boss+66 3
+poke vk_boss+67 0
+poke vk_boss+70 1
+poke vk_boss+71 1
+poke vk_boss+36 0
+poke vk_boss+46 0
+until ram8('vk_boss+36') == 1 max 10
+expect ram16('vk_boss+38') == 0xACB8 and ram16('vk_boss+40') == 0x9802 and ram16('vk_boss+42') == 0xFFB8 and ram16('vk_boss+44') == 0xFE02
+expect ram8('vk_boss+66') == 2 and ram8('vk_boss+67') == 1
+expect ram8('vk_psg+22') == 0x0A # B9A9 : la boule du boss 9, effet 0A
+shot zzd-boule
+set fb sorted(colors(0, 40, 256, 200))
+expect (172, 170, 238) in fb or (238, 238, 238) in fb # boule = bandelette de Castlevania-MD
+# Contact de la boule : energie 32 -> 31 (trace R et B : -1) ; contact du corps : -4 (trace C2 : 28).
+poke vk_boss+36 0
+poke vk_boss+46 0
+until enemies.invuln == 0 max 300
+poke vk_game+0 100
+poke vk_game+1 192
+poke vk_game+2 0
+wait 30
+set e0 enemies.energy
+poke vk_boss+78 25600 16
+wait 3
+expect enemies.energy == e0 - 4
+shot zzd-contact
+poke Enemies_god 1
+# Coup de fouet : -4 sur la barre ENEMY (C418 128 -> 124), objet a portee (classe 6, boite 2805).
+expect ram8('vk_boss+21') == 0x80
+until game.player.mode == 0 max 100
+wait 80
+poke vk_game+0 100
+poke vk_game+1 192
+poke vk_game+2 0
+wait 2
+poke vk_boss+78 30720 16
+poke vk_boss+98 58880 16
+wait 1
+tap B
+wait 20
+expect ram8('vk_boss+21') == 0x7C
+shot zzd-coup
+# Mort : C418 = 4, un coup : disparition des deux objets, orbe en (78h, 40h) qui tombe a C0h (trace C2 : orbe 1469, au sol 1900).
+poke vk_boss+36 0
+poke vk_boss+46 0
+until game.player.mode == 0 max 100
+poke vk_game+0 100
+poke vk_game+1 192
+poke vk_game+2 0
+poke vk_boss+21 4
+poke vk_boss+78 30720 16
+poke vk_boss+98 58880 16
+wait 1
+until ram8('vk_boss+192') != 0 max 30 B # 7806 -> 9A3A : une flamme par corps
+expect ram8('vk_boss+21') == 0 and ram8('vk_boss+3') == 0 and ram8('vk_boss+64') == 0 and ram8('vk_boss+84') == 0
+expect ram8('vk_boss+193') != 0
+set t3 frame
+set ex [(ram8('vk_boss+78'), ram8('vk_boss+76') - 24), (ram8('vk_boss+98'), ram8('vk_boss+96') - 24)]
+include zzs_boss_flame.inc
+until ram8('vk_boss+28') == 1 max 200
+expect 120 <= frame - t3 <= 135
+shot zzd-mort
+poke vk_game+0 108
+poke vk_game+1 176
+set t4 frame
+until ram8('vk_boss+34') == 1 max 600
+expect ram8('vk_boss+33') == 0xC0 and 430 <= frame - t4 <= 445
+shot zzd-orbe
+set ob sorted(colors(100, 160, 140, 220))
+expect (98, 0, 0) in ob and (172, 0, 0) in ob # l'orbe (006 et 00A ecrits dans les entrees 5 et 7, l'entree 5 les contenait deja)
+until ram8('vk_boss+35') == 1 max 10
+until game.stage == 10 max 900
+wait 10
+expect game.room == 0 and game.player.x == 32 and game.player.y == 144 # trace C2 : stage 10 en (32, 144)
+expect ram8('vk_boss') == 0
+shot zzd-stage10

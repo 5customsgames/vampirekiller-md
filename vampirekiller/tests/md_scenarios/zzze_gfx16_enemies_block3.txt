@@ -1,0 +1,145 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Ennemis 16 bits (bloc 3)") : les ennemis communs du bloc 3
+# (stages 7 a 9) sont dessines avec les sprites 16 bits de Castlevania-MD : puces (objet 0D, salle 1 du stage 7), squelette
+# (objet 0B) et ses os (salle 2), corbeau (objet 0C, salle 7), tete de meduse (objet 08, stage 8 salle 1), statue (objet 0A,
+# colonne d'os), sa boule, ses yeux allumes et le corbeau (salle 6), puces du stage 9 (salle 5, entree 7 de PAL2 = 66C), statue
+# et squelette (salle 4, entree 7 = 26C). L'objet 1C reste en MSX. Couleurs 16 bits (entrees libres de PAL2) : 846 (98, 68, 139),
+# E88 (139, 137, 238), 004 (65, 0, 0), 642 (32, 68, 98), 864 (65, 101, 139), et le noir 000.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+include zy_enter7.inc
+poke Enemies_god 1
+poke Enemies_s7R 0 16
+poke vk_debug_keys 1
+expect ram8('vk_gfx16_on') == 1
+wait 30
+# Stage 7, salle 1 : deux puces
+hold A 3
+hold A+RIGHT 3
+wait 2
+expect game.stage == 7 and game.room == 1
+poke vk_game+0 232
+poke vk_game+1 176
+until enemies.alive >= 2 max 400
+wait 20
+shot zzze3-puces
+# Les cases du HUD gardent leurs couleurs, comme aux blocs 1 et 2.
+expect pixel(200, 11) == (238, 238, 238) # case de droite, haut
+expect pixel(135, 11) == (238, 0, 32) # case rouge, haut
+set px [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set py [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set pc sorted({c for c in colors(px - 8, py - 14, px + 8, py + 2)})
+expect (65, 0, 0) in pc and (205, 68, 98) in pc # rouge sombre 16 bits (entree libre 9), rouge de l'entree fixe 3
+expect (205, 101, 98) not in pc # plus le saumon MSX (couleur 2 | 5 = 7)
+# Salle 2 : squelette et os
+hold A 3
+hold A+RIGHT 3
+wait 2
+expect game.stage == 7 and game.room == 2
+poke vk_game+0 16
+poke vk_game+1 176
+until any(enemies.objects[k].active and enemies.objects[k].type == 13 for k in range(15)) max 600
+wait 6
+shot zzze3-squelette-os
+set kx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 11][0]
+set ky [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 11][0]
+set kc sorted({c for c in colors(kx - 8, ky - 31, kx + 8, ky + 1)})
+expect (98, 68, 139) in kc and (139, 137, 238) in kc # squelette violet 16 bits (entrees libres 5 et 6)
+expect (238, 238, 238) not in kc # plus le squelette blanc MSX
+set ox [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 13][0]
+set oy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 13][0]
+set oc sorted({c for c in colors(ox - 8, oy - 14, ox + 8, oy + 2)})
+expect (139, 137, 238) in oc and (238, 238, 238) not in oc # os lilas, plus l'os blanc MSX
+# Salle 7 : corbeau (au repos, puis en vol)
+poke vk_game+20 6
+hold A 3
+hold A+RIGHT 3
+wait 2
+expect game.stage == 7 and game.room == 7
+poke vk_game+0 232
+poke vk_game+1 176
+wait 20
+shot zzze3-corbeau-pose
+expect [enemies.objects[k].pose for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12] == [0x89]
+set rx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12][0]
+set ry [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12][0]
+set rc sorted({c for c in colors(rx - 8, ry - 14, rx + 8, ry + 2)})
+expect (32, 68, 98) in rc and (65, 101, 139) in rc # corbeau bleu sombre (entrees libres 10 et 11)
+expect (238, 170, 139) not in rc # plus la couleur 1 du MSX (saumon des ailes)
+wait 40
+shot zzze3-corbeau-vol
+set rx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12][0]
+set ry [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12][0]
+set rc sorted({c for c in colors(rx - 8, ry - 14, rx + 8, ry + 2)})
+expect [enemies.objects[k].pose for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 12][0] != 0x89
+expect (32, 68, 98) in rc and (238, 170, 139) not in rc
+# Stage 8, salle 1 : tete de meduse
+poke vk_game+22 8
+poke vk_game+20 0
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 8 and game.room == 1
+until any(enemies.objects[k].active and enemies.objects[k].type == 7 for k in range(15)) max 400
+wait 8
+shot zzze3-meduse
+set mx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 7][0]
+set my [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 7][0]
+set mc sorted({c for c in colors(mx - 8, my - 14, mx + 8, my + 2)})
+expect (0, 0, 238) in mc and (139, 137, 238) in mc # cheveux bleus (entree fixe 15) et lilas
+expect (205, 101, 32) not in mc and (205, 170, 98) not in mc # plus l'orange MSX
+# Salle 6 : statue (colonne d'os), boule, yeux allumes ; corbeau
+poke vk_game+20 5
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 8 and game.room == 6
+poke vk_game+0 232
+poke vk_game+1 144
+until any(enemies.objects[k].active and enemies.objects[k].type == 10 for k in range(15)) max 300
+wait 6
+shot zzze3-statue-boule
+set sx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 9][0]
+set sy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 9][0]
+set sc sorted({c for c in colors(sx - 8, sy - 31, sx + 8, sy + 1)})
+expect (65, 101, 139) in sc and (32, 68, 98) in sc # colonne d'os 16 bits (entrees libres 10, 11)
+set fx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 10][0]
+set fy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 10][0]
+# Boule : sphere rouge 8 x 8 (rouge MSX de l'entree fixe 8, bord rouge sombre de l'entree libre 9), la MSX est un disque rouge uni.
+set fc colors(fx - 4, fy - 12, fx + 12, fy + 4)
+expect len([c for c in fc if c == (238, 0, 32)]) >= 10 and (65, 0, 0) in fc
+until any(enemies.objects[k].active and enemies.objects[k].type == 9 and (enemies.objects[k].extraPhase & 64) for k in range(15)) max 300
+wait 3
+shot zzze3-statue-yeux
+set sc2 sorted({c for c in colors(sx - 8, sy - 31, sx + 8, sy + 1)})
+expect sc2 != sc and (238, 170, 139) in sc2 # yeux : l'image de b3_pillar_flash (contour orange clair)
+# Stage 9, salle 5 : puces (salle a entree 7 = 66C)
+poke vk_game+22 9
+poke vk_game+20 4
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 9 and game.room == 5
+until enemies.alive >= 2 max 400
+wait 20
+shot zzze3-puces9
+set px [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set py [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set pc sorted({c for c in colors(px - 8, py - 14, px + 8, py + 2)})
+expect (65, 0, 0) in pc and (205, 101, 98) not in pc
+# Salle 4 : statue et squelette (salle a entree 7 = 26C)
+hold A 3
+hold A+LEFT 3
+wait 20
+expect game.stage == 9 and game.room == 4
+wait 40
+shot zzze3-statue-squelette9
+expect pixel(200, 11) == (238, 238, 238) and pixel(135, 11) == (238, 0, 32)
+set kx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 11][0]
+set ky [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 11][0]
+set kc sorted({c for c in colors(kx - 8, ky - 31, kx + 8, ky + 1)})
+expect (98, 68, 139) in kc and (238, 238, 238) not in kc
+set sx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 9][0]
+set sy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 9][0]
+set sc sorted({c for c in colors(sx - 8, sy - 31, sx + 8, sy + 1)})
+expect (65, 101, 139) in sc and (238, 0, 32) not in sc # colonne d'os, plus la statue rouge du MSX

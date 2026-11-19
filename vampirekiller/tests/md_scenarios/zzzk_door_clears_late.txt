@@ -1,0 +1,74 @@
+# (zzzk) door of stage 13 room 8: enemies cleared at opening (7806)
+until front_mode == MODES['TITLE'] max 2000
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+tap START
+until ram8('paused') == 1 max 30
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap B
+until game.stage == 13 and game.room == 0 max 300
+poke Enemies_god 1
+until game.player.mode == 0 max 300
+# RAM fixture: stage 13 room 8 (door room), no D010 freeze
+poke vk_game+16 1 32
+poke vk_game+22 13
+poke vk_game+20 8
+poke vk_front_mode 4 16
+poke vk_game+0 100
+poke vk_game+1 176
+poke vk_game+2 0
+poke vk_game+3 0
+poke vk_game+4 0
+poke vk_game+7 0
+poke vk_game+8 0
+poke vk_game+23 0
+poke vk_game+26 0
+poke vk_game+30 0
+poke vk_candles 255
+poke items+2 0
+poke items+3 0
+poke freeze_drawn 0
+poke room_freeze 4
+poke room_freeze+1 4
+poke room_freeze+2 0
+write freeze_vtimer 32 ram32('vtimer')
+until ram8('room_freeze') == 0 and ram8('freeze_drawn') != 0 max 100
+until enemies.alive > 0 max 800
+wait 200
+shot zzzk-before
+dump before
+poke items 1
+poke vk_game+2 1
+poke vk_game+0 20
+poke vk_game+1 144
+poke vk_game+3 0
+until ram8('items+2') == 1 max 60 LEFT
+wait 2
+shot zzzk-after
+dump after
+expect enemies.alive == 0
+wait 120
+expect enemies.alive == 0 # the door walk keeps the spawn gate shut (5EC3): no red skeleton comes back

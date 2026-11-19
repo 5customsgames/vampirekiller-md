@@ -1,0 +1,58 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Bougies et torches 16 bits") : l'objet 1B (goutte rouge que liberent les
+# bougies d'objet 15 des stages 11 a 18) est une goutte de gel ombree (dessinee sur la silhouette MSX) en PAL2, avec les seules
+# entrees fixes (2, 8, 14) : memes cellules, memes boites, memes transferts que le MSX. Une salle par chargement : stage 11 (cellules
+# A0 / A4 chargees apres le bloc), stage 12 (pool de la salle, blocs 4), stage 14 (bloc 5), stage 16 salle 0 (seule salle qui ne charge
+# que la goutte : pool du bloc 6, palette MSX), stage 17 (bloc 6), stage 18 (bloc 7).
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+include zzze_pause.inc
+repeat 10 zzze_down.inc
+tap B
+expect ram8('vk_gfx16_on') == 1
+until game.stage == 11 and game.room == 0 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-11
+include zzze_pause.inc
+repeat 5 zzze_right.inc
+tap B
+until game.stage == 11 and game.room == 5 max 300
+include zzze_blob_b.inc
+include zzze_pause.inc
+tap DOWN
+repeat 7 zzze_right.inc
+tap B
+until game.stage == 12 and game.room == 7 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-12
+include zzze_pause.inc
+repeat 2 zzze_down.inc
+tap RIGHT
+tap B
+until game.stage == 14 and game.room == 1 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-14
+include zzze_pause.inc
+repeat 2 zzze_down.inc
+tap B
+until game.stage == 16 and game.room == 0 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-16
+include zzze_pause.inc
+tap DOWN
+repeat 3 zzze_right.inc
+tap B
+until game.stage == 17 and game.room == 3 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-17
+include zzze_pause.inc
+tap DOWN
+repeat 3 zzze_right.inc
+tap B
+until game.stage == 18 and game.room == 3 max 300
+include zzze_blob_b.inc
+shot zzze-goutte1b-18

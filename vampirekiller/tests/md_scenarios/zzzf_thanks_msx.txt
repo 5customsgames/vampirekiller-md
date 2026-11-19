@@ -1,0 +1,48 @@
+# (zzzf) Ecran de remerciements du portage (research/thanks-screen.md), graphismes MSX : apres les credits d'origine de Dracula (stage 18),
+# decor simple (cadre de tirets), 5 pages, effets raster sur les pseudos (degrade arc-en-ciel par HInt sur la couleur 13, vague par ligne de HScroll).
+# Les credits sont lances par poke de l'etat 1 puis sautes a l'etat 4 (sortie) : on ne rejoue pas le combat. Premier cycle : retour a la cour (difficulte +1).
+# START saute l'ecran a la page 3.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+include zzzf_thanks_route.inc
+poke Enemies_god 1
+poke dracula+544 1
+until ram8('dracula+544') == 2 max 100
+wait 40
+shot zzzf-msx-0-credits
+expect ram8('dracula+544') == 2 and front_mode == MODES['INTERIOR']
+set diff0 ram8('dracula+609')
+poke dracula+482 1
+poke dracula+544 4
+until front_mode == MODES['THANKS'] max 200
+set t0 frame
+wait 40
+shot zzzf-msx-1-page1
+expect (238, 238, 238) in colors(0, 0, 256, 224) # le texte blanc
+expect ram8('dracula_cycles') == 1
+expect ram8('dracula+609') == diff0 + 1 or diff0 == 2 # difficulte +1 (plafonnee a 2)
+# Page 2 : les pseudos DIDLITH (rangee 12, lignes 96-103) et SHINBLAZE (rangee 15, lignes 120-127), un cliche toutes les 8 images
+until frame - t0 >= 330 + 40 max 400
+set a1 sorted({c for c in colors(80, 96, 176, 104)})
+shot zzzf-msx-2-page2-a
+wait 7
+set a2 sorted({c for c in colors(80, 96, 176, 104)})
+shot zzzf-msx-2-page2-b
+wait 7
+shot zzzf-msx-2-page2-c
+wait 7
+shot zzzf-msx-2-page2-d
+expect len(a1) >= 5 and len(a2) >= 5 # le degrade donne plusieurs couleurs sur la hauteur d'un nom
+expect a1 != a2 # il s'anime d'une image a l'autre
+set w1 colors(0, 100, 256, 101)
+wait 5
+set w2 colors(0, 100, 256, 101)
+expect w1 != w2 # la vague decale la ligne
+# Page 3 (serveur Discord), puis START saute le reste
+until frame - t0 >= 660 + 50 max 400
+shot zzzf-msx-3-page3
+expect len({c for c in colors(0, 104, 256, 120)}) >= 5
+tap START
+until front_mode == MODES['COURTYARD'] max 300
+expect frame - t0 < 760 # sorti par START, pas par la fin
+shot zzzf-msx-4-cour

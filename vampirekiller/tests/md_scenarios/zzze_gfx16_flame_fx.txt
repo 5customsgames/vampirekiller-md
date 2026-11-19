@@ -1,0 +1,37 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Bougies et torches 16 bits") : les flammes des torches de la cour
+# (flame_fx) sont les flammes des braseros de Castlevania-MD (obj_0, obj_1), memes tuiles et memes trames (A A B B) que le MSX,
+# dessinees avec PAL1 (palette des objets). Eteinte au fouet, la flamme disparait comme en MSX.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+expect ram8('vk_gfx16_on') == 1
+shot zzze-flammes-cour-a
+set fa sorted({c for c in colors(64, 144, 80, 160)})
+echo fa
+expect (139, 0, 0) in fa and (172, 32, 32) in fa and (238, 170, 0) in fa # rouges sombres et orange de la palette des objets (entrees 4, 5 et 9 de PAL1)
+expect (238, 0, 32) not in fa # plus le rouge vif MSX de la flamme
+set fb sorted({c for c in colors(192, 144, 208, 160)})
+echo fb
+expect (139, 0, 0) in fb and (238, 170, 0) in fb and (238, 0, 32) not in fb
+# La flamme A change d'etat (A -> B) toutes les 16 images : la capture de 16 images plus tard n'a pas les memes pixels.
+set pa [pixel(x, y) for x in range(64, 80) for y in range(144, 160)]
+wait 16
+shot zzze-flammes-cour-b
+expect [pixel(x, y) for x in range(64, 80) for y in range(144, 160)] != pa
+# Eteinte au fouet : la flamme disparait (il ne reste ni rouge sombre ni orange de flamme).
+poke vk_game+0 44
+wait 4
+expect ram8('vk_candles+4') == 3
+hold B 2
+until (ram8('vk_candles+4') & 1) == 0 max 20
+wait 6
+shot zzze-flammes-cour-eteinte
+set fo sorted({c for c in colors(60, 140, 84, 152)})
+echo fo
+expect (238, 170, 0) not in fo and (172, 32, 32) not in fo
+set fq sorted({c for c in colors(188, 144, 212, 156)})
+expect (139, 0, 0) in fq and (238, 170, 0) in fq # la torche B reste allumee

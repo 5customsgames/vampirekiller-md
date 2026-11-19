@@ -1,0 +1,85 @@
+# (zzzq) stage 17 room 7: eagle 0F carrying its flea 23h; the cross destroys both (flames at Y - 18h and Y)
+until front_mode == MODES['TITLE'] max 2000
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+tap START
+until ram8('paused') == 1 max 30
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap B
+until game.stage == 17 and game.room == 0 max 300
+poke Enemies_god 1
+until game.player.mode == 0 max 300
+# RAM fixture: stage 17 room 7, no D010 freeze
+poke vk_game+16 1 32
+poke vk_game+22 17
+poke vk_game+20 7
+poke vk_front_mode 4 16
+poke vk_game+0 100
+poke vk_game+1 176
+poke vk_game+2 0
+poke vk_game+3 0
+poke vk_game+4 0
+poke vk_game+7 0
+poke vk_game+8 0
+poke vk_game+23 0
+poke vk_game+26 0
+poke vk_game+30 0
+poke vk_candles 255
+poke items+2 0
+poke items+3 0
+poke freeze_drawn 0
+poke room_freeze 4
+poke room_freeze+1 4
+poke room_freeze+2 0
+write freeze_vtimer 32 ram32('vtimer')
+until ram8('room_freeze') == 0 and ram8('freeze_drawn') != 0 max 100
+until any(e.type == 18 and e.active for e in enemies.enemy) max 800
+wait 30
+shot zzzq-before
+dump before
+# the enemies of the room are alive and awake: record them, then clear them (7806)
+set objs_before [(e.type, e.x, e.y) for e in enemies.enemy if e.active]
+set nproj_before len([p for p in enemies.projectiles if p.active])
+# the cross (object 05, 8DBB -> 7806): same clearing as the door, with the flash; placed in the last drop slot (C570), the first ones may hold the room's objects
+write vk_candles+105 8 game.player.x - 8
+write vk_candles+106 8 game.player.y - 4
+poke vk_candles+107 0x05
+poke vk_candles+108 0xFF
+poke vk_candles+109 0
+poke vk_candles+104 3
+wait 2
+shot zzzq-after
+dump after
+expect enemies.alive == 0 # 7806: every C800 and D700 object destroyed (flames and 0C effects do not count as alive)
+expect len([p for p in enemies.projectiles if p.active]) == 0 # D700 shots destroyed too (9A1A)
+expect sorted((e.x, e.y) for e in enemies.enemy if e.flame) == sorted((x, y - {11: 16, 14: 0, 22: 16, 20: 16, 23: 24, 18: 24}[t]) for (t, x, y) in objs_before) # one flame 1E per destroyed object at (X, Y - 9B33[type])
+wait 120
+expect enemies.alive == 0 # the door walk keeps the spawn gate shut (5EC3) and nothing is lifted again
+expect len([e for e in enemies.enemy if e.flame]) == 0 # the 16 flame updates are over

@@ -1,0 +1,106 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Boss des stages 12 et 15 16 bits") : Frankenstein, Igor, tir et flammes en 16 bits.
+# Entree dans la salle du boss par le selecteur de salles (comme zzp_stage12), poke vk_gfx16 1 au titre.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+tap START
+until ram8('paused') == 1 max 30
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap B
+until game.stage == 12 and game.room == 0 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 1 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 2 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 3 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 4 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 5 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 12 and game.room == 6 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+expect game.stage == 12 and game.room == 6
+expect ram8('vk_gfx16_on') == 1
+wait 60
+expect ram8('vk_boss') != 0
+shot zzze-boss12-entree
+# Corps 16 bits (b4_frank, b4_flea) en PAL2 : les entrees libres de vk_boss12_16_palette (864, 642) n'existent pas dans la palette MSX de la salle.
+set pal lambda: [(ram16('vdpSpriteCache+%d' % (8 * i + 4)) >> 13) & 3 for i in range(80)]
+expect 2 in pal()
+set bc sorted({c for c in colors(0, 120, 256, 192)})
+expect (65, 101, 139) in bc and (32, 68, 98) in bc
+# Tir de l'homme (tuile 60 du bloc : 760 + 60 = 820), sphere rouge 16 bits, tire toutes les 48 images quand Igor est en l'air.
+set sh lambda: sorted((x, y) for (tl, x, y) in linked_sprites(820, 820))
+until sh() != [] max 400
+set sp sh()[0]
+shot zzze-boss12-tir
+set sc sorted({c for c in colors(sp[0] - 8, sp[1] - 8, sp[0] + 16, sp[1] + 16)})
+expect (172, 32, 32) in sc and (238, 170, 139) in sc
+# Dernier coup : flamme de mort du corps, F4 (tuile 824 = 760 + 64) puis F8 (828), 16 images chacune comme en MSX (pas de PAL1 : PAL2 de la salle).
+poke vk_boss+21 4
+poke vk_boss+76 192
+poke vk_boss+78 40
+wait 1
+until ram8('vk_boss+3') == 0 max 60 B
+set fl lambda t: sorted((x, y) for (tl, x, y) in linked_sprites(t, t))
+until fl(824) != [] max 12
+wait 3
+shot zzze-boss12-flamme
+expect 2 in pal()
+set fc sorted({c for c in colors(0, 100, 256, 192)})
+expect (238, 206, 32) in fc
+until fl(828) != [] max 20
+until fl(824) + fl(828) == [] max 60

@@ -1,0 +1,19 @@
+# build products (make clean)
+/out/
+/build/
+/sgdk/lib/libmd.a
+/sgdk/lib/libmd_debug.a
+/sgdk/out/
+# local Python environment (make venv)
+/.venv/
+__pycache__/
+
+# ROM d origine (jamais versionnees)
+*.nes
+*.rom
+*.zip
+*.7z
+/castlevania/Release/
+
+# ROM construites (jamais versionnees)
+/roms/

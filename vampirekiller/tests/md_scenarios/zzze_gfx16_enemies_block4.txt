@@ -1,0 +1,133 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Ennemis 16 bits (bloc 4)") : les ennemis communs du bloc 4
+# (stages 10 a 12) sont dessines avec les sprites 16 bits de Castlevania-MD : chauve-souris (objet 04, stage 10 salle 0),
+# hommes-poissons (03 / 21h), leurs gouttes et leur tir (salles 1 et 6), zombies (stage 11 salle 0), puce (0D, salle 1),
+# aigle (0F) et sa puce (23h, salle 2), dragon d'os (0E) et son tir (stage 11 salle 5, stage 12 salle 0). Une palette PAL2 par
+# groupe de salles (stage 10, 11/0, 11/1-4, 11/5 et 12) ; les entrees fixes gardent les couleurs MSX (cases du HUD).
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+include zzm_enter10.inc
+poke Enemies_god 1
+poke vk_debug_keys 1
+expect ram8('vk_gfx16_on') == 1
+# Stage 10, salle 0 : chauve-souris
+until any(enemies.enemy[k].active and enemies.enemy[k].type == 2 for k in range(7)) max 400
+wait 10
+shot zzze4-chauve-souris
+expect pixel(200, 11) == (238, 238, 238) # case de droite, haut
+expect pixel(135, 11) == (238, 0, 32) # case rouge, haut
+set bx [enemies.enemy[k].x for k in range(7) if enemies.enemy[k].active and enemies.enemy[k].type == 2][0]
+set by [enemies.enemy[k].y for k in range(7) if enemies.enemy[k].active and enemies.enemy[k].type == 2][0]
+set bc sorted({c for c in colors(bx - 12, by - 8, bx + 12, by + 16)})
+expect (172, 32, 32) in bc and (238, 170, 205) in bc # chauve-souris rouge sombre (entree libre 5) et lilas (entree fixe 7, CAE)
+expect (139, 206, 205) not in bc # plus le contour cyan MSX (couleur 4)
+wait 6
+shot zzze4-chauve-souris2
+# Salle 1 : hommes-poissons et gouttes
+hold A 3
+hold A+RIGHT 3
+wait 2
+expect game.stage == 10 and game.room == 1
+until len([k for k in range(7) if enemies.enemy[k].active and enemies.enemy[k].type == 17]) >= 2 max 300
+wait 30
+shot zzze4-poissons
+set fx [enemies.enemy[k].x for k in range(7) if enemies.enemy[k].active and enemies.enemy[k].type == 17][0]
+set fy [enemies.enemy[k].y for k in range(7) if enemies.enemy[k].active and enemies.enemy[k].type == 17][0]
+set fc sorted({c for c in colors(fx - 8, fy - 31, fx + 8, fy + 1)})
+expect (139, 0, 0) in fc and (238, 170, 0) in fc # homme-poisson rouge et jaune (entrees libres 4 et 9)
+expect (238, 32, 65) not in fc # plus le rouge MSX de la couleur 5
+# Salle 6 : homme-poisson 21h et son tir
+poke vk_game+20 5
+hold A 3
+hold A+RIGHT 3
+wait 2
+expect game.stage == 10 and game.room == 6
+poke vk_game+0 32
+poke vk_game+1 174
+until any(enemies.objects[k].active and enemies.objects[k].type == 10 for k in range(15)) max 1200
+wait 2
+shot zzze4-poisson-tir
+# Simon s'ecarte : la boule file seule vers la gauche
+poke vk_game+0 120
+wait 4
+shot zzze4-poisson-tir2
+set tx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 10][0]
+set ty [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 10][0]
+set tc colors(tx - 12, ty - 16, tx + 12, ty + 4)
+echo (tx, ty, len([c for c in tc if c == (238, 0, 32)]), sorted({c for c in tc}))
+expect len([c for c in tc if c == (238, 0, 32)]) >= 4 and (139, 0, 0) in tc # boule : sphere rouge (entree fixe 8), bord rouge sombre (entree libre 4)
+# Stage 11, salle 0 : zombies
+poke vk_game+22 11
+poke vk_game+20 1
+hold A 3
+hold A+LEFT 3
+wait 20
+expect game.stage == 11 and game.room == 0
+until any(enemies.objects[k].active and enemies.objects[k].type in (0, 1) for k in range(15)) max 500
+wait 40
+shot zzze4-zombies
+set zx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type in (0, 1)][0]
+set zy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type in (0, 1)][0]
+set zc sorted({c for c in colors(zx - 12, zy - 8, zx + 12, zy + 40)})
+expect (205, 101, 238) in zc and (205, 206, 238) in zc # zombie lilas (entrees libres 5 et 6 de la palette de la salle 11/0)
+expect (238, 32, 205) not in zc # plus le magenta MSX (couleur 4)
+# Salle 1 : puce 0D
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 11 and game.room == 1
+until any(enemies.objects[k].active and enemies.objects[k].type == 14 for k in range(15)) max 300
+wait 20
+shot zzze4-puce
+set px [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set py [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 14][0]
+set pc sorted({c for c in colors(px - 8, py - 14, px + 8, py + 2)})
+expect (65, 0, 0) in pc and (172, 32, 32) in pc # puce rouge sombre (entrees libres 4 et 9 de la palette 11/1-4)
+# Salle 2 : aigle et sa puce
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 11 and game.room == 2
+until any(enemies.objects[k].active and enemies.objects[k].type == 18 for k in range(15)) max 500
+wait 10
+shot zzze4-aigle
+set ex [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 18][0]
+set ey [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 18][0]
+set ec sorted({c for c in colors(ex - 16, ey - 30, ex + 16, ey + 2)})
+expect (98, 101, 98) in ec and (65, 68, 98) in ec # aigle gris (entrees libres 11 et 5)
+expect (205, 68, 98) not in ec # plus le rouge MSX de l'aigle (couleur 3)
+wait 7
+shot zzze4-aigle2
+wait 7
+shot zzze4-aigle3
+# Les deux ailes battent : la colonne gauche de la toile (cellules 40 / 44 et 4C / 54) change de pose avec la colonne droite
+set tls []
+repeat 90 zzze_eagle_sample.inc
+expect max(tls) >= 10 and min(tls) == 0 # coin haut gauche : aile levee (poses 6D / 8D) puis vide (pose 6E)
+# Salle 5 : dragon d'os et son tir (palette des salles du dragon)
+poke vk_game+20 4
+hold A 3
+hold A+RIGHT 3
+wait 20
+expect game.stage == 11 and game.room == 5
+until [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 19] == [168] max 600
+shot zzze4-dragon
+set dc sorted({c for c in colors(160, 108, 230, 134)})
+expect (32, 0, 32) in dc and (98, 101, 98) in dc # dragon d'os : contour violet sombre et gris (palette des salles du dragon)
+until any(enemies.objects[k].active and enemies.objects[k].type == 10 for k in range(15)) max 600
+wait 2
+shot zzze4-dragon-tir
+# Stage 12, salle 0 : dragon (cellules du pool tardif)
+poke vk_game+22 12
+poke vk_game+20 1
+hold A 3
+hold A+LEFT 3
+wait 20
+expect game.stage == 12 and game.room == 0
+wait 200
+shot zzze4-dragon12
+set gx [enemies.objects[k].x for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 19][0]
+set gy [enemies.objects[k].y for k in range(15) if enemies.objects[k].active and enemies.objects[k].type == 19][0]
+set gc sorted({c for c in colors(150, 140, 230, 166)})
+expect (139, 137, 98) in gc and (98, 101, 98) in gc # meme dragon au stage 12, cellules du pool tardif
+expect pixel(200, 11) == (238, 238, 238) and pixel(135, 11) == (238, 0, 32)

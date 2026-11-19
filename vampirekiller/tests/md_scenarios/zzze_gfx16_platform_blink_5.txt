@@ -1,0 +1,54 @@
+# (zzze) Mode 16 bits, plateforme mobile du stage 5 (salle 1) : meme controle que zzze_gfx16_platform_blink (stage 10 salle 0).
+# La plateforme (PAL1) garde ses couleurs pendant l invincibilite de Simon (C434), jamais la silhouette 238, 0, 32.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+wait 10
+tap C
+wait 40
+tap START
+wait 10
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+wait 4
+tap A
+expect ram8('Enemies_god') == 0
+tap DOWN
+tap DOWN
+tap DOWN
+tap RIGHT
+tap B
+until game.stage == 5 and game.room == 1 max 400
+poke Enemies_god 1
+expect ram8('vk_gfx16_on') == 1
+wait 30
+set pl lambda: ram8('vk_platforms+2')
+set pr lambda: ram8('vk_platforms+1')
+shot zzze-plat-5-1-avant
+set pcol lambda: sorted({c for c in colors(pl(), pr(), pl() + 32, pr() + 16)})
+set px game.player.x
+set py game.player.y
+echo (px, py, pl(), pr())
+poke enemy_state+143 0xFF
+wait 4
+expect 0x90 <= ram8('enemy_state+143') <= 0xFF
+set red lambda: len([c for c in colors(game.player.x - 8, game.player.y - 31, game.player.x + 16, game.player.y + 1) if c == (238, 0, 32)]) > 40
+set s0 (red(), pcol())
+wait 1
+set s1 (red(), pcol())
+wait 1
+set s2 (red(), pcol())
+wait 1
+set s3 (red(), pcol())
+shot zzze-plat-5-1-clignote
+expect len({a[0] for a in (s0, s1, s2, s3)}) == 2
+expect all((238, 0, 32) not in a[1] for a in (s0, s1, s2, s3)) # jamais la silhouette de Simon
+expect all(c in a[1] for a in (s1, s2, s3) for c in s0[1]) # couleurs de la plateforme gardees a chaque image

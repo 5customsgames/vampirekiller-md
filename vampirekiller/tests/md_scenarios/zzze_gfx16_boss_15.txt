@@ -1,0 +1,123 @@
+# (zzze) Mode graphique 16 bits (research/gfx16.md, section "Boss des stages 12 et 15 16 bits") : Death, ses faux et leurs flammes en 16 bits.
+# Entree dans la salle du boss par le selecteur de salles (comme zzp_stage15), poke vk_gfx16 1 au titre.
+until front_mode == MODES['TITLE'] max 2000
+wait 2
+poke vk_gfx16 1
+tap START
+tap START
+until front_mode == MODES['COURTYARD'] max 500
+wait 60
+tap START
+until ram8('paused') == 1 max 30
+tap UP
+tap UP
+tap DOWN
+tap DOWN
+tap LEFT
+tap RIGHT
+tap LEFT
+tap RIGHT
+tap B
+tap A
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap B
+until game.stage == 15 and game.room == 0 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 1 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 2 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 3 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 4 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 5 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 6 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 7 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 8 max 300
+poke Enemies_god 1
+poke vk_enemies+162 1
+until game.player.mode == 0 max 300
+wait 30
+include zzp_next.inc
+until game.stage == 15 and game.room == 9 max 300
+poke Enemies_god 1
+until game.player.mode == 0 max 300
+wait 30
+# Ennemis non figes (D010 = 0, vk_enemies+162) dans la salle du boss : un D010 pose pendant le chargement de la salle serait efface ou non selon
+# l'image exacte de l'entree, et figerait les faux (leur passe 98E5 ne tourne pas : ni rotation ni lancer) ; on pose donc 0 apres le chargement.
+poke vk_enemies+162 0
+expect game.stage == 15 and game.room == 9
+expect ram8('vk_gfx16_on') == 1
+wait 60
+expect ram8('vk_boss') != 0
+shot zzze-boss15-entree
+set pal lambda: [(ram16('vdpSpriteCache+%d' % (8 * i + 4)) >> 13) & 3 for i in range(80)]
+expect 2 in pal()
+# Death (b5_death, violet) et ses faux (b5_sickle0..3 : lame bleue et blanche) : couleurs absentes de la palette MSX de la salle.
+set bc sorted({c for c in colors(0, 30, 256, 192)})
+expect (98, 68, 172) in bc    # violet de Death (entree libre 4 de vk_boss15_16_palette ; 664 en MSX)
+set sk lambda: sorted((x, y) for (tl, x, y) in linked_sprites(784, 799))
+until sk() != [] max 300
+shot zzze-boss15-faux
+# Dernier coup : flamme de mort du corps, F4 (tuile 804 = 760 + 44) puis F8 (808) en PAL2, comme en MSX.
+poke vk_boss+21 4
+poke vk_boss+76 176
+poke vk_boss+78 40
+wait 1
+until ram8('vk_boss+3') == 0 max 60 B
+set fl lambda t: sorted((x, y) for (tl, x, y) in linked_sprites(t, t))
+until fl(804) != [] max 12
+wait 3
+shot zzze-boss15-flamme
+expect 2 in pal()
+until fl(808) != [] max 20
+until fl(804) + fl(808) == [] max 60
